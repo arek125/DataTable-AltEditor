@@ -44,7 +44,7 @@ Usually JSON's use the Object approach, but we cannot be sure.
 
 Following column options are provided.
 
-    type = "text" | "select" | "hidden" | "readonly"
+    type = "text"| "number" | "select" | "hidden" | "readonly"
 
 Type of HTML input to be shown.
 
@@ -92,6 +92,17 @@ An error message that is displayed when the unique constraint is not respected. 
 
 Set HTML `"data-special"` attribute (don't know what's that needed for).
 
+    required = true | false
+    
+Specfied if field is required or not.
+
+    customValidation = function(fieldValue){/*do something*/ return "error msg"}
+    
+Custom function to check if field value is valid. Return string if field value is not valid return nothing if is valid.
+
+    defaultValue = function | string | number
+    
+Sets default field value at dialog open.
 
 ### Credits
 See LICENSE and CHANGELOG for various credits.
