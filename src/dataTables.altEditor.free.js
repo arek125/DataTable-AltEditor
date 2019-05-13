@@ -258,7 +258,9 @@
                         maxLength: (obj.maxLength ? obj.maxLength : false),
                         multiple: (obj.multiple ? obj.multiple : false),
                         select2: (obj.select2 ? obj.select2 : false),
-                        datepicker: (obj.datepicker ? obj.datepicker : false)
+                        datepicker: (obj.datepicker ? obj.datepicker : false),
+                        required: (obj.required ? obj.required : false),
+                        customValidation: (obj.customValidation ? true : false)
                     };
                 }
                 var adata = dt.rows({
@@ -279,11 +281,12 @@
                         // handle fields that are visible to the user
                         data += "<div style='margin-left: initial;margin-right: initial;' class='form-group row'>"
                         data += "<div class='col-sm-3 col-md-3 col-lg-3 text-right' style='padding-top:4px;'>"
-                        data += "<label for='" + columnDefs[j].name + "'>" + columnDefs[j].title + ":</label></div>"
+                        data += "<label for='" + columnDefs[j].name + "'>" + columnDefs[j].title + ":</label>"
+                        + (!columnDefs[j].required ? "" : "<span class='ms-formvalidation'>*</span>")+"</div>"
                         data += "<div class='col-sm-8 col-md-8 col-lg-8'>";
 
                         // Adding text-inputs and errorlabels
-                        if (columnDefs[j].type.indexOf("text") >= 0) {
+                        if (columnDefs[j].type.indexOf("text") >= 0 || columnDefs[j].type.indexOf("number") >= 0) {
                             data += "<input type='"
                                 + that._quoteattr(columnDefs[j].type)
                                 + "' id='"
@@ -306,8 +309,11 @@
                                 + columnDefs[j].unique
                                 + "'"
                                 + (columnDefs[j].maxLength == false ? "" : " maxlength='" + columnDefs[j].maxLength + "'")
+                                + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"
                                 + " style='overflow:hidden'  class='form-control  form-control-sm' value='"
-                                + that._quoteattr(adata.data()[0][columnDefs[j].name]) + "'>";
+                                + that._quoteattr(adata.data()[0][columnDefs[j].name]) + "' "+
+                                + (!columnDefs[j].required ? "" : "required")
+                                +">";
                             data += "<label id='" + columnDefs[j].name + "label"
                                 + "' class='errorLabel'></label>";
                         }
@@ -340,8 +346,10 @@
                                         + columnDefs[j].options[i] + "</option>";
                                 }
                             }
-                            data += "<select class='form-control" + (columnDefs[j].select2 ? ' select2' : '') + "' id='" + columnDefs[j].name + "' name='" + columnDefs[j].title + "' " + (columnDefs[j].multiple ? 'multiple' : '') + ">" + options
-                                + "</select>";
+                            data += "<select class='form-control" + (columnDefs[j].select2 ? ' select2' : '') + "' id='" + columnDefs[j].name + "' name='" + columnDefs[j].title + "' " + (columnDefs[j].multiple ? 'multiple' : '') 
+                            + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"
+                            + ">" + options
+                            + "</select>";
                         }
                         data += "</div><div style='clear:both;'></div></div>";
 
@@ -351,7 +359,7 @@
                 data += "</form>";
                 var selector = this.modal_selector;
                 $(selector).on('show.bs.modal', function () {
-                    var btns = '<button type="button" data-content="remove" class="btn btn-default" data-dismiss="modal">Close</button>' +
+                    var btns = '<button type="button" data-content="remove" class="btn btn-default" data-dismiss="modal" id="editRowBtnClose">Close</button>' +
                         '<button type="button" data-content="remove" class="btn btn-primary" id="editRowBtn">Edit</button>';
                     $(selector).find('.modal-title').html('Edit Record');
                     $(selector).find('.modal-body').html(data);
@@ -397,7 +405,7 @@
                     rowDataArray[$(this).attr('id')] = $(this).val();
                 });
 
-console.log(rowDataArray); //DEBUG
+                if(console != undefined)console.log(rowDataArray); //DEBUG
 
                 that.onEditRow(that,
                     rowDataArray,
@@ -458,7 +466,7 @@ console.log(rowDataArray); //DEBUG
 
                 var selector = this.modal_selector;
                 $(selector).on('show.bs.modal', function () {
-                    var btns = '<button type="button" data-content="remove" class="btn btn-default" data-dismiss="modal">Close</button>' +
+                    var btns = '<button type="button" data-content="remove" class="btn btn-default" data-dismiss="modal" id="deleteRowBtnClose">Close</button>' +
                         '<button type="button"  data-content="remove" class="btn btn-danger" id="deleteRowBtn">Delete</button>';
                     $(selector).find('.modal-title').html('Delete Record');
                     $(selector).find('.modal-body').html(data);
@@ -523,7 +531,11 @@ console.log(rowDataArray); //DEBUG
                         uniqueMsg: (obj.uniqueMsg ? obj.uniqueMsg : ''),
                         maxLength: (obj.maxLength ? obj.maxLength : false),
                         multiple: (obj.multiple ? obj.multiple : false),
-                        select2: (obj.select2 ? obj.select2 : false)
+                        select2: (obj.select2 ? obj.select2 : false),
+                        datepicker: (obj.datepicker ? obj.datepicker : false),
+                        required: (obj.required ? obj.required : false),
+                        customValidation: (obj.customValidation ? true : false),
+                        defaultValue: (typeof obj.defaultValue == "function" ? obj.defaultValue() : obj.defaultValue)
                     }
                 }
 
@@ -540,10 +552,12 @@ console.log(rowDataArray); //DEBUG
                             + columnDefs[j].name
                             + "'>"
                             + columnDefs[j].title
-                            + ":</label></div><div class='col-sm-8 col-md-8 col-lg-8'>";
+                            + ":</label>"
+                            + (!columnDefs[j].required ? "" : "<span class='ms-formvalidation'>*</span>")
+                            + "</div><div class='col-sm-8 col-md-8 col-lg-8'>";
 
                         // Adding text-inputs and errorlabels
-                        if (columnDefs[j].type.indexOf("text") >= 0) {
+                        if (columnDefs[j].type.indexOf("text") >= 0||columnDefs[j].type.indexOf("number") >= 0) {
                             data += "<input type='"
                                 + that._quoteattr(columnDefs[j].type)
                                 + "' id='"
@@ -566,7 +580,10 @@ console.log(rowDataArray); //DEBUG
                                 + columnDefs[j].unique
                                 + "'"
                                 + (columnDefs[j].maxLength == false ? "" : " maxlength='" + columnDefs[j].maxLength + "'")
-                                + " style='overflow:hidden'  class='form-control  form-control-sm' value=''>";
+                                + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"
+                                + " style='overflow:hidden'  class='form-control  form-control-sm' value='"+(columnDefs[j].defaultValue?columnDefs[j].defaultValue:"")+"' "
+                                + (!columnDefs[j].required ? "" : "required")
+                                +">";
                             data += "<label id='" + that._quoteattr(columnDefs[j].name) + "label"
                                 + "' class='errorLabel'></label>";
                         }
@@ -586,11 +603,22 @@ console.log(rowDataArray); //DEBUG
                         if (columnDefs[j].type.indexOf("select") >= 0) {
                             var options = "";
                             for (var i = 0; i < columnDefs[j].options.length; i++) {
-                                options += "<option value='" + that._quoteattr(columnDefs[j].options[i])
-                                    + "'>" + columnDefs[j].options[i] + "</option>";
+                                if (columnDefs[j].defaultValue == columnDefs[j].options[i]) {
+                                    options += "<option value='" + that._quoteattr(columnDefs[j].options[i])
+                                        + "' selected>" + columnDefs[j].options[i] + "</option>";
+                                } else {
+                                    options += "<option value='" + that._quoteattr(columnDefs[j].options[i])
+                                        + "'>" + columnDefs[j].options[i] + "</option>";
+                                }
+                                // options += "<option value='" + that._quoteattr(columnDefs[j].options[i])
+                                //     + "'>" + columnDefs[j].options[i] + "</option>";
                             }
-                            data += "<select class='form-control" + (columnDefs[j].select2 ? ' select2' : '') + "' id='" + that._quoteattr(columnDefs[j].name) + "' name='" + that._quoteattr(columnDefs[j].title) + "' " + (columnDefs[j].multiple ? 'multiple' : '') + ">" + options
+                            data += "<select class='form-control" + (columnDefs[j].select2 ? ' select2' : '') + "' id='" + that._quoteattr(columnDefs[j].name) + "' name='" + that._quoteattr(columnDefs[j].title) + "' " + (columnDefs[j].multiple ? 'multiple' : '') 
+                                + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"
+                                + ">" + options
                                 + "</select>";
+                            data += "<label id='" + that._quoteattr(columnDefs[j].name) + "label"
+                                + "' class='errorLabel'></label>";
                         }
                         data += "</div><div style='clear:both;'></div></div>";
                     }
@@ -599,7 +627,7 @@ console.log(rowDataArray); //DEBUG
 
                 var selector = this.modal_selector;
                 $(selector).on('show.bs.modal', function () {
-                    var btns = '<button type="button" data-content="remove" class="btn btn-default" data-dismiss="modal">Close</button>' +
+                    var btns = '<button type="button" data-content="remove" class="btn btn-default" data-dismiss="modal" id="addRowBtnClose">Close</button>' +
                         '<button type="button"  data-content="remove" class="btn btn-primary" id="addRowBtn">Add</button>';
                     $(selector).find('.modal-title').html(
                         'Add Record');
@@ -635,7 +663,7 @@ console.log(rowDataArray); //DEBUG
                     rowDataArray[$(this).attr('id')] = $(this).val();
                 });
 
-//console.log(rowDataArray); //DEBUG
+                if(console != undefined)(rowDataArray); //DEBUG
 
                 that.onAddRow(that,
                     rowDataArray,
@@ -663,9 +691,12 @@ console.log(rowDataArray); //DEBUG
                     this.s.dt.draw();
 
                     // Disabling submit button
-                    $("div"+selector).find("button#addRowBtn").prop('disabled', true);
-                    $("div"+selector).find("button#editRowBtn").prop('disabled', true);
-                    $("div"+selector).find("button#deleteRowBtn").prop('disabled', true);
+                    // $("div"+selector).find("button#addRowBtn").prop('disabled', true);
+                    // $("div"+selector).find("button#editRowBtn").prop('disabled', true);
+                    // $("div"+selector).find("button#deleteRowBtn").prop('disabled', true);
+                    $("div"+selector).find("button#addRowBtnClose").trigger("click");
+                    $("div"+selector).find("button#editRowBtnClose").trigger("click");
+                    $("div"+selector).find("button#deleteRowBtnClose").trigger("click");
             },
 
             /**
@@ -675,7 +706,7 @@ console.log(rowDataArray); //DEBUG
                 
                     //TODO should honor dt.ajax().dataSrc
                     
-                    var data = JSON.parse(response);
+                    var data = (typeof response === "string") ? JSON.parse(response) : response;
                     var selector = this.modal_selector;
                     $(selector + ' .modal-body .alert').remove();
 
@@ -687,9 +718,12 @@ console.log(rowDataArray); //DEBUG
                     this.s.dt.row.add(data).draw(false);
 
                     // Disabling submit button
-                    $("div" + selector).find("button#addRowBtn").prop('disabled', true);
-                    $("div" + selector).find("button#editRowBtn").prop('disabled', true);
-                    $("div" + selector).find("button#deleteRowBtn").prop('disabled', true);
+                    // $("div" + selector).find("button#addRowBtn").prop('disabled', true);
+                    // $("div" + selector).find("button#editRowBtn").prop('disabled', true);
+                    // $("div" + selector).find("button#deleteRowBtn").prop('disabled', true);
+                    $("div"+selector).find("button#addRowBtnClose").trigger("click");
+                    $("div"+selector).find("button#editRowBtnClose").trigger("click");
+                    $("div"+selector).find("button#deleteRowBtnClose").trigger("click");
             },
 
             /**
@@ -714,9 +748,12 @@ console.log(rowDataArray); //DEBUG
                     this.s.dt.draw();
 
                     // Disabling submit button
-                    $("div" + selector).find("button#addRowBtn").prop('disabled', true);
-                    $("div" + selector).find("button#editRowBtn").prop('disabled', true);
-                    $("div" + selector).find("button#deleteRowBtn").prop('disabled', true);
+                    // $("div" + selector).find("button#addRowBtn").prop('disabled', true);
+                    // $("div" + selector).find("button#editRowBtn").prop('disabled', true);
+                    // $("div" + selector).find("button#deleteRowBtn").prop('disabled', true);
+                    $("div"+selector).find("button#addRowBtnClose").trigger("click");
+                    $("div"+selector).find("button#editRowBtnClose").trigger("click");
+                    $("div"+selector).find("button#deleteRowBtnClose").trigger("click");
             },
 
             /**
@@ -744,7 +781,7 @@ console.log(rowDataArray); //DEBUG
              * Default callback for insertion: mock webservice, always success.
              */
             onAddRow: function(dt, rowdata, success, error) {
-                console.log("Missing AJAX configuration for INSERT");
+                if(console != undefined)console.log("Missing AJAX configuration for INSERT");
                 success(rowdata);
             },
 
@@ -752,7 +789,7 @@ console.log(rowDataArray); //DEBUG
              * Default callback for editing: mock webservice, always success.
              */
             onEditRow: function(dt, rowdata, success, error) {
-                console.log("Missing AJAX configuration for UPDATE");
+                if(console != undefined)console.log("Missing AJAX configuration for UPDATE");
                 success(rowdata);
             },
 
@@ -760,7 +797,7 @@ console.log(rowDataArray); //DEBUG
              * Default callback for deletion: mock webservice, always success.
              */
             onDeleteRow: function(dt, rowdata, success, error) {
-                console.log("Missing AJAX configuration for DELETE");
+                if(console != undefined)console.log("Missing AJAX configuration for DELETE");
                 success(rowdata);
             },
 
@@ -776,13 +813,18 @@ console.log(rowDataArray); //DEBUG
                 var errorcount = 0;
 
                 // Looping through all text fields
-                $('form[name="altEditor-form"] *').filter(':text').each(
+                $('form[name="altEditor-form"] *').filter(':text, input[type=number], select').each(
                     function (i) {
                         var errorLabel = "#" + $(this).attr("id") + "label";
                         // reset error display
                         $(errorLabel).hide();
                         $(errorLabel).empty();
-                        if (!$(this).val().match($(this).attr("pattern"))) {
+                        if($(this).prop('required')&&!$(this).val()){
+                            $(errorLabel).html("This field is required !");
+                            $(errorLabel).show();
+                            errorcount++;
+                        }
+                        else if (!$(this).val().match($(this).attr("pattern"))) {
                             $(errorLabel).html($(this).attr("data-errorMsg"));
                             $(errorLabel).show();
                             errorcount++;
@@ -801,6 +843,14 @@ console.log(rowDataArray); //DEBUG
                                     $(errorLabel).show();
                                     errorcount++;
                                 }
+                            }
+                        }
+                        else if ($(this).attr("custom-validation") == "true"){
+                            var validationResult = dt.context[0].aoColumns[parseInt($(this).attr("coll-number"))].customValidation($(this).val());
+                            if(typeof validationResult == "string"){
+                                $(errorLabel).html(validationResult);
+                                $(errorLabel).show();
+                                errorcount++;
                             }
                         }
                     });
