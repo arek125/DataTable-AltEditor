@@ -260,7 +260,10 @@
                         select2: (obj.select2 ? obj.select2 : false),
                         datepicker: (obj.datepicker ? obj.datepicker : false),
                         required: (obj.required ? obj.required : false),
-                        customValidation: (obj.customValidation ? true : false)
+                        customValidation: (obj.customValidation ? true : false),
+                        max: (!isNaN(obj.max) ? obj.max : undefined),
+                        min: (!isNaN(obj.min) ? obj.min : undefined),
+                        formatData: (obj.formatData ? true : false)
                     };
                 }
                 var adata = dt.rows({
@@ -308,8 +311,10 @@
                                 + "' data-unique='"
                                 + columnDefs[j].unique
                                 + "'"
-                                + (columnDefs[j].maxLength == false ? "" : " maxlength='" + columnDefs[j].maxLength + "'")
-                                + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"
+                                + (columnDefs[j].maxLength ? " maxlength='" + columnDefs[j].maxLength + "'": "")
+                                + (!isNaN(columnDefs[j].max)&&columnDefs[j].type.indexOf("number") >= 0 ? " max='" + columnDefs[j].max + "'": "")
+                                + (!isNaN(columnDefs[j].min)&&columnDefs[j].type.indexOf("number") >= 0 ? " min='" + columnDefs[j].min + "'": "")
+                                + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"+ " format-data='" + columnDefs[j].formatData + "'"
                                 + " style='overflow:hidden'  class='form-control  form-control-sm' value='"
                                 + that._quoteattr(adata.data()[0][columnDefs[j].name]) + "' "+
                                 + (!columnDefs[j].required ? "" : "required")
@@ -360,7 +365,7 @@
                 var selector = this.modal_selector;
                 $(selector).on('show.bs.modal', function () {
                     var btns = '<button type="button" data-content="remove" class="btn btn-default" data-dismiss="modal" id="editRowBtnClose">Close</button>' +
-                        '<button type="button" data-content="remove" class="btn btn-primary" id="editRowBtn">Edit</button>';
+                        '<button type="button" data-content="remove" class="btn btn-primary" id="editRowBtn">Save</button>';
                     $(selector).find('.modal-title').html('Edit Record');
                     $(selector).find('.modal-body').html(data);
                     $(selector).find('.modal-footer').html(btns);
@@ -402,7 +407,10 @@
 
                 // Getting the inputs from the edit-modal
                 $('form[name="altEditor-form"] *').filter(':input').each(function (i) {
-                    rowDataArray[$(this).attr('id')] = $(this).val();
+                    var entryData = $(this).val();
+                    if ($(this).attr("format-data") == "true")
+                        entryData = dt.context[0].aoColumns[parseInt($(this).attr("coll-number"))].formatData(entryData);
+                    rowDataArray[$(this).attr('id')] = entryData;
                 });
 
                 if(console != undefined)console.log(rowDataArray); //DEBUG
@@ -535,11 +543,14 @@
                         datepicker: (obj.datepicker ? obj.datepicker : false),
                         required: (obj.required ? obj.required : false),
                         customValidation: (obj.customValidation ? true : false),
-                        defaultValue: (typeof obj.defaultValue == "function" ? obj.defaultValue() : obj.defaultValue)
+                        defaultValue: (typeof obj.defaultValue == "function" ? obj.defaultValue() : obj.defaultValue),
+                        max: (!isNaN(obj.max) ? obj.max : undefined),
+                        min: (!isNaN(obj.min) ? obj.min : undefined),
+                        formatData: (obj.formatData ? true : false)
                     }
                 }
 
-
+                if(console!= undefined)console.log(columnDefs);
                 // Building add-form
                 var data = "";
                 data += "<form name='altEditor-form' role='form'>";
@@ -579,8 +590,10 @@
                                 + "' data-unique='"
                                 + columnDefs[j].unique
                                 + "'"
-                                + (columnDefs[j].maxLength == false ? "" : " maxlength='" + columnDefs[j].maxLength + "'")
-                                + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"
+                                + (columnDefs[j].maxLength ? " maxlength='" + columnDefs[j].maxLength + "'" : "")
+                                + (!isNaN(columnDefs[j].max)&&columnDefs[j].type.indexOf("number") >= 0 ? " max='" + columnDefs[j].max + "'": "")
+                                + (!isNaN(columnDefs[j].min)&&columnDefs[j].type.indexOf("number") >= 0 ? " min='" + columnDefs[j].min + "'": "")
+                                + " coll-number='" + j + "'" + " custom-validation='" + columnDefs[j].customValidation + "'"+ " format-data='" + columnDefs[j].formatData + "'"
                                 + " style='overflow:hidden'  class='form-control  form-control-sm' value='"+(columnDefs[j].defaultValue?columnDefs[j].defaultValue:"")+"' "
                                 + (!columnDefs[j].required ? "" : "required")
                                 +">";
@@ -655,12 +668,14 @@
             _addRowData: function () {
                 var that = this;
                 var dt = this.s.dt;
-
                 var rowDataArray = {};
 
                 // Getting the inputs from the modal
                 $('form[name="altEditor-form"] *').filter(':input').each(function (i) {
-                    rowDataArray[$(this).attr('id')] = $(this).val();
+                    var entryData = $(this).val();
+                    if ($(this).attr("format-data") == "true")
+                        entryData = dt.context[0].aoColumns[parseInt($(this).attr("coll-number"))].formatData(entryData);
+                    rowDataArray[$(this).attr('id')] = entryData;
                 });
 
                 if(console != undefined)(rowDataArray); //DEBUG
@@ -813,12 +828,13 @@
                 var errorcount = 0;
 
                 // Looping through all text fields
-                $('form[name="altEditor-form"] *').filter(':text, input[type=number], select').each(
+                $(".modal.show").find('form[name="altEditor-form"] *').filter(':text, input[type=number], select').each(
                     function (i) {
                         var errorLabel = "#" + $(this).attr("id") + "label";
                         // reset error display
                         $(errorLabel).hide();
                         $(errorLabel).empty();
+                        //if(console != undefined)console.log($(this).attr("max"),$(this).attr("type")=="number",$(this).val(),$(this).prop("max"));
                         if($(this).prop('required')&&!$(this).val()){
                             $(errorLabel).html("This field is required !");
                             $(errorLabel).show();
@@ -829,6 +845,24 @@
                             $(errorLabel).show();
                             errorcount++;
                         }
+                        else if ($(this).prop("maxlength"))
+                            if($(this).val().length > parseInt($(this).attr("maxlength"))){
+                                $(errorLabel).html("Max length cannot be more then "+$(this).attr("maxlength"));
+                                $(errorLabel).show();
+                                errorcount++;
+                            }
+                        else if ($(this).prop("max")&&$(this).attr("type")=="number"&&$(this).val())
+                            if(parseFloat($(this).val()) > parseFloat($(this).attr("max"))){
+                                $(errorLabel).html("Max value cannot be more then "+$(this).attr("max"));
+                                $(errorLabel).show();
+                                errorcount++;
+                            }
+                        else if ($(this).prop("min")&&$(this).attr("type")=="number"&&$(this).val())
+                            if(parseFloat($(this).val()) < parseFloat($(this).attr("min"))){
+                                $(errorLabel).html("Min value cannot be less then "+$(this).attr("min"));
+                                $(errorLabel).show();
+                                errorcount++;
+                            }
                         // now check if its should be unique
                         else if ($(this).attr("data-unique") == "true") {
                             // go through each item in this column
