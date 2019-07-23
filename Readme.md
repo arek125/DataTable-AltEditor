@@ -104,6 +104,16 @@ Custom function to check if field value is valid. Return string if field value i
     
 Sets default field value at dialog open.
 
+    max = integer
+    min = integer
+
+If type is `"input(number)"` , set HTML `"max|min"` attribute.
+
+    formatData = function(fieldValue){/*do something*/ return formatedValue}
+    
+Custom function that will format end fieldData.
+
+
 ### Credits
 See LICENSE and CHANGELOG for various credits.
 
