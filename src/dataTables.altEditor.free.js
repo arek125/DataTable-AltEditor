@@ -141,6 +141,8 @@
                 var dt = this.s.dt;
                 var modal_id = 'altEditor-modal-' + ("" + Math.random()).replace(".", "");
                 this.modal_selector = '#' + modal_id;
+                this.form_id = 'altEditor-form-' + ("" + Math.random()).replace(".", "");
+                this.form_selector = '#' + this.form_id;
                 var modal = '<div class="modal fade" id="' + modal_id + '" tabindex="-1" role="dialog">' +
                     '<div class="modal-dialog">' +
                     '<div class="modal-content">' +
@@ -153,7 +155,7 @@
                     '</div>' +
                     '<div class="modal-footer">' +
                     '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' + //FIXME need i18n
-                    '<input type="submit" form="altEditor-form" class="btn btn-primary"></input>' +
+                    '<input type="submit" form="'+this.form_id+'" class="btn btn-primary"></input>' +
                     '</div>' +
                     '</div>' +
                     '</div>' +
@@ -273,7 +275,7 @@
                 // Building edit-form
                 var data = "";
 
-                data += "<form name='altEditor-form' role='form'>";
+                data += "<form name='"+this.form_id+"' role='form'>";
 
                 for (var j in columnDefs) {
                     // handle hidden fields
@@ -406,7 +408,7 @@
                 });
 
                 // Getting the inputs from the edit-modal
-                $('form[name="altEditor-form"] *').filter(':input').each(function (i) {
+                $('form[name="'+this.form_id+'"] *').filter(':input').each(function (i) {
                     var entryData = $(this).val();
                     if ($(this).attr("format-data") == "true")
                         entryData = dt.context[0].aoColumns[parseInt($(this).attr("coll-number"))].formatData(entryData);
@@ -447,7 +449,7 @@
                 // Building delete-modal
                 var data = "";
 
-                data += "<form name='altEditor-form' role='form'>";
+                data += "<form name='"+this.form_id+"' role='form'>";
                 for (var j in columnDefs) {
                     if (columnDefs[j].type.indexOf("hidden") >= 0) {
                         data += "<input type='hidden' id='" + columnDefs[j].title + "' value='" + adata.data()[0][columnDefs[j].name] + "'></input>";
@@ -553,7 +555,7 @@
                 if(console!= undefined)console.log(columnDefs);
                 // Building add-form
                 var data = "";
-                data += "<form name='altEditor-form' role='form'>";
+                data += "<form name='"+this.form_id+"' role='form'>";
                 for (var j in columnDefs) {
                     if (columnDefs[j].type.indexOf("hidden") >= 0) {
                         // just do nothing for hidden fields!
@@ -669,16 +671,15 @@
                 var that = this;
                 var dt = this.s.dt;
                 var rowDataArray = {};
-
                 // Getting the inputs from the modal
-                $('form[name="altEditor-form"] *').filter(':input').each(function (i) {
+                $('form[name="'+this.form_id+'"] *').filter(':input').each(function (i) {
                     var entryData = $(this).val();
                     if ($(this).attr("format-data") == "true")
                         entryData = dt.context[0].aoColumns[parseInt($(this).attr("coll-number"))].formatData(entryData);
                     rowDataArray[$(this).attr('id')] = entryData;
                 });
 
-                if(console != undefined)(rowDataArray); //DEBUG
+                if(console != undefined)console.log(rowDataArray); //DEBUG
 
                 that.onAddRow(that,
                     rowDataArray,
@@ -826,15 +827,14 @@
                 var dt = this.s.dt;
                 var isValid = false;
                 var errorcount = 0;
-
                 // Looping through all text fields
-                $(".modal.show").find('form[name="altEditor-form"] *').filter(':text, input[type=number], select').each(
-                    function (i) {
+                //if(console != undefined)console.log($(".modal.show").find('form[name="'+this.form_id+'"] *').filter(':text, input[type=number], select'));
+                $(".modal.show").find('form[name="'+this.form_id+'"] *').filter(':text, input[type=number], select').each(function (i) {
                         var errorLabel = "#" + $(this).attr("id") + "label";
                         // reset error display
                         $(errorLabel).hide();
                         $(errorLabel).empty();
-                        //if(console != undefined)console.log($(this).attr("max"),$(this).attr("type")=="number",$(this).val(),$(this).prop("max"));
+                        //if(console != undefined)console.log($(this).attr("custom-validation") == "true",$(this).attr("coll-number"));
                         if($(this).prop('required')&&!$(this).val()){
                             $(errorLabel).html("This field is required !");
                             $(errorLabel).show();
@@ -864,7 +864,7 @@
                                 errorcount++;
                             }
                         // now check if its should be unique
-                        else if ($(this).attr("data-unique") == "true") {
+                        if ($(this).attr("data-unique") == "true") {
                             // go through each item in this column
                             var colData = dt.column("th:contains('" + $(this).attr("name") + "')").data();
                             var selectedCellData = null;
@@ -879,7 +879,8 @@
                                 }
                             }
                         }
-                        else if ($(this).attr("custom-validation") == "true"){
+                        if ($(this).attr("custom-validation") == "true"){
+                            //if(console != undefined)console.log(dt.context[0].aoColumns[parseInt($(this).attr("coll-number"))]);
                             var validationResult = dt.context[0].aoColumns[parseInt($(this).attr("coll-number"))].customValidation($(this).val());
                             if(typeof validationResult == "string"){
                                 $(errorLabel).html(validationResult);
